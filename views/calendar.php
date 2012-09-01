@@ -1,58 +1,45 @@
 <?php defined('SYSPATH') OR die('No direct access allowed.');
 
-// Get the day names
-$days = Calendar::days(2);
+$today = ($month == date('n')) ? date('j') : false;
 
-// Previous and next month timestamps
-$next = mktime(0, 0, 0, $month + 1, 1, $year);
-$prev = mktime(0, 0, 0, $month - 1, 1, $year);
-
-// Import the GET query array locally and remove the day
-$qs = $_GET;
-unset($qs['day']);
-
-// Previous and next month query URIs
-$path_info = Arr::get($_SERVER, 'PATH_INFO');
-$prev = $path_info.URL::query(array_merge($qs, array('month' => date('n', $prev), 'year' => date('Y', $prev))));
-$next = $path_info.URL::query(array_merge($qs, array('month' => date('n', $next), 'year' => date('Y', $next))));
+$month = Arr::get($_GET, 'month', date('n', Arr::get($_GET, 'ts', date('n'))));
+$year= Arr::get($_GET, 'year', date('Y', Arr::get($_GET, 'ts', date('Y'))));
 
 ?>
-<table class="calendar">
-	<caption>
-		<span class="prev"><?php echo html::anchor($prev, '&larr;') ?></span>
-		<span class="title"><?php echo strftime('%B %Y', mktime(0, 0, 0, $month, 1, $year)) ?></span>
-		<span class="next"><?php echo html::anchor($next, '&rarr;') ?></span>
-	</caption>
-	<thead>
-		<tr>
-			<?php foreach ($days as $weekday_name): ?>
-			<th><?php echo $weekday_name ?></th>
-			<?php endforeach ?>
-		</tr>
-	</thead>
-	<tbody>
-		<?php foreach ($weeks as $week): ?>
-		<tr>
-			<?php foreach ($week as $day):
-				list($number, $current, $data) = $day;
-				
-				$output = NULL;
-				$classes = array();
-				if (is_array($data))
-				{
-					$classes = $data['classes'];
-					if ( ! empty($data['output']))
-					{
-						$output = '<ul class="output"><li>'.implode('</li><li>', $data['output']).'</li></ul>';
-					}
+
+<div class="table month">
+	<?php foreach ($weeks as $week): ?>
+	<div class="row">
+		<?php foreach ($week as $day):
+			list($number, $current, $data, $events) = $day;
+			$output = NULL;
+			$classes = array();
+
+			if (is_array($data)) {
+				$classes = $data['classes'];
+				if ( ! empty($data['output'])) {
+					$output = '<ul class="output"><li>'.implode('</li><li>', $data['output']).'</li></ul>';
 				}
-			?>
-			<td class="<?php echo implode(' ', $classes) ?>">
-				<span class="day"><?php echo $day[0] ?></span>
-				<?php echo $output ?>
-			</td>
-			<?php endforeach ?>
-		</tr>
+			}
+		?>
+		<div class="col-m<?php echo $current ? ($number == $today ? ' current' : '') : ' alt'?>" data-timestamp="<?php echo mktime(0, 0, 0, $month, $number, $year)?>">
+			<?php if (count($events) > 0): ?>
+				<div class="users">
+				<?php foreach ($events as $event): ?>
+					<a>
+						<img src="<?php echo Photo::as_path($event['user']['id'], 'photo-mini', Photo::AVATAR) ?>" alt="client" />
+						<div class="tooltip">
+							<p>appointment: <?php echo date('g:ia', $event['timestamp']) ?> - <?php echo date('g:ia', $event['end_timestamp'])?></p>
+							<span class="arrow"></span>
+						</div>
+					</a>
+				<?php endforeach ?>
+					<div class="cl">&nbsp;</div>
+				</div>
+			<?php endif ?>
+			<span class="day"><?php echo $number ?></span>
+		</div>
 		<?php endforeach ?>
-	</tbody>
-</table>
+	</div>
+	<?php endforeach ?>
+</div>

@@ -42,7 +42,7 @@ class Calendar extends Event_Subject {
 		//	$days[] = strftime($format, ($i * 60*60*24 + 300000));
 			$days[] = strftime($format, ($i * 86400 + 300000));
 		}
-		
+
 		if (Calendar::$start_monday === TRUE)
 		{
 			// Push Sunday to the end of the days
@@ -202,7 +202,7 @@ class Calendar extends Event_Subject {
 	 *
 	 * @return  array
 	 */
-	public function weeks()
+	public function weeks($events = null)
 	{
 		// First day of the month as a timestamp
 		$first = mktime(1, 0, 0, $this->month, 1, $this->year);
@@ -237,7 +237,7 @@ class Calendar extends Event_Subject {
 				$this->notify(array($this->month - 1, $i, $this->year, $week_number, FALSE));
 
 				// Add previous month padding days
-				$week[] = array($i, FALSE, $this->observed_data);
+				$week[] = array($i, FALSE, $this->observed_data, null);
 				$days++;
 			}
 		}
@@ -257,8 +257,21 @@ class Calendar extends Event_Subject {
 			// Notify the listeners
 			$this->notify(array($this->month, $i, $this->year, $week_number, TRUE));
 
+			$day_events = array();
+
+			foreach ($events as $event)
+			{
+				$from = mktime(0, 0, 0, date('n', $event['timestamp']), $i, date('Y', $event['timestamp']));
+				$to = mktime(0, 0, 0, date('n', $event['timestamp']), $i + 1, date('Y', $event['timestamp']));
+
+				if ($from <= $event['timestamp'] && $to > $event['timestamp'])
+				{
+					$day_events[] = $event;
+				}
+			}
+
 			// Add days to this month
-			$week[] = array($i, TRUE, $this->observed_data);
+			$week[] = array($i, TRUE, $this->observed_data, $day_events);
 			$days++;
 		}
 
@@ -276,7 +289,7 @@ class Calendar extends Event_Subject {
 				$this->notify(array($this->month + 1, $i, $this->year, $week_number, FALSE));
 
 				// Add next month padding days
-				$week[] = array($i, FALSE, $this->observed_data);
+				$week[] = array($i, FALSE, $this->observed_data, null);
 			}
 		}
 
@@ -332,13 +345,13 @@ class Calendar extends Event_Subject {
 	 *
 	 * @return  string
 	 */
-	public function render($tmpl = 'calendar')
+	public function render($events, $tmpl = 'calendar')
 	{
 		$view =  new View($tmpl, array
 		(
 			'month'  => $this->month,
 			'year'   => $this->year,
-			'weeks'  => $this->weeks(),
+			'weeks'  => $this->weeks($events),
 		));
 
 		return $view->render();
