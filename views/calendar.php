@@ -24,13 +24,17 @@ $year= Arr::get($_GET, 'year', date('Y', Arr::get($_GET, 'ts', date('Y'))));
 			}
 		?>
 		<div class="droppable-m col-m<?php echo $current ? ($number == $today ? ' current' : '') : ' alt'?>" data-timestamp="<?php echo $day_start ?>">
+			<span class="view">view date</span><span class="day"><?php echo $number ?></span>
 			<?php if (count($events) > 0): ?>
 				<div class="users">
-				<?php foreach ($events as $event):
+				<?php for ($i = 0; $i < count($events); $i++):
+					if ($i > 5) break;
+
+					$event = $events[$i];
 					$start_period = date('a', $event['timestamp']);
 					$end_period = date('a', $event['end_timestamp']);
 				?>
-					<a>
+					<a class="draggable" data-event-id="<?php echo $event['id']?> ">
 						<img src="<?php echo Photo::as_path($event['user']['id'], 'photo-mini', Photo::AVATAR) ?>" alt="client" />
 						<div class="tooltip" style="display: none;" data-event-id="<?php echo $event['id'] ?>" data-user-id="<?php echo $event['user']['id'] ?>" data-timestamp="<?php echo $event['timestamp'] ?>" data-end-timestamp="<?php echo $event['end_timestamp'] ?>" data-date="<?php echo $day_start ?>">
 							<p class="header"><?php echo User::name($event['user']) ?></p>
@@ -43,11 +47,10 @@ $year= Arr::get($_GET, 'year', date('Y', Arr::get($_GET, 'ts', date('Y'))));
 							<span class="arrow"></span>
 						</div>
 					</a>
-				<?php endforeach ?>
+				<?php endfor ?>
 					<div class="cl">&nbsp;</div>
 				</div>
 			<?php endif ?>
-			<span class="view">view date</span><span class="day"><?php echo $number ?></span>
 		</div>
 		<?php endforeach ?>
 	</div>
